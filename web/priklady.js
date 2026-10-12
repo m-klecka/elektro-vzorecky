@@ -34,7 +34,7 @@ const UCINIK = [[0.7, 0.75, 0.8, 0.85, 0.9, 0.95], ""];
 const VELICINY = {
   U: "napětí", I: "proud", R: "odpor", P: "výkon", t: "čas", W: "elektrická práce (energie)",
   c: "cena za 1 kWh", N: "náklady", P1: "příkon", P2: "výkon", η: "účinnost",
-  R1: "odpor prvního rezistoru", R2: "odpor druhého rezistoru",
+  R1: "odpor prvního rezistoru", R2: "odpor druhého rezistoru", R3: "odpor třetího rezistoru",
   ρ: "měrný odpor materiálu", l: "délka vodiče", S: "průřez vodiče", Rv: "odpor vedení", J: "proudová hustota",
   R20: "odpor při 20 °C", α: "teplotní součinitel odporu", ϑ: "teplota", Δϑ: "oteplení",
   ΔU: "úbytek napětí", Δu: "procentní úbytek napětí", ΔP: "ztrátový výkon",
@@ -42,7 +42,7 @@ const VELICINY = {
   L: "indukčnost", f: "kmitočet", C: "kapacita", Cf: "kapacita ve faradech",
   XL: "indukční reaktance", XC: "kapacitní reaktance", X: "reaktance", Z: "impedance",
   U1: "primární napětí", U2: "sekundární napětí", N1: "počet závitů primáru", N2: "počet závitů sekundáru",
-  I1: "proud primárem", I2: "proud sekundárem",
+  I1: "proud primárem", I2: "proud sekundárem", p: "převod transformátoru",
 };
 
 const PRIKLADY = [
@@ -160,6 +160,44 @@ const PRIKLADY = [
     napovedy: ["Vyjdi ze vzorce η = P2 / P1 a vyjádři P1. Příkon musí vyjít větší než výkon."],
   },
 
+  {
+    skupina: "Výkon a práce", tema: "Proud z výkonu a odporu",
+    text: "Na rezistoru o odporu {R} se mění v teplo výkon {P}. Jaký proud I jím protéká?",
+    vars: { R: [5, 200, "Ω", 0], P: [[100, 500, 1000, 2000], "W"] },
+    hledam: "I", vzorec: "sqrt(P / R)", jednotka: "A",
+    vysvetleni: "Ze vzorce P = R · I² vyjádříme proud: nejdřív vydělíme odporem, tím dostaneme I², a pak odmocníme.",
+    napovedy: ["Vyjdi ze vzorce P = R · I². Proud je v něm na druhou, takže na konci přijde odmocnina."],
+  },
+  {
+    skupina: "Výkon a práce", tema: "Napětí z výkonu a odporu",
+    text: "Rezistor o odporu {R} má mít výkon {P}. Na jaké napětí U ho musíme připojit?",
+    vars: { R: [5, 200, "Ω", 0], P: [[100, 500, 1000, 2000], "W"] },
+    hledam: "U", vzorec: "sqrt(P * R)", jednotka: "V",
+    vysvetleni: "Ze vzorce P = U² / R vyjádříme napětí: vynásobíme odporem, tím dostaneme U², a pak odmocníme.",
+    napovedy: ["Vyjdi ze vzorce P = U² / R. Napětí je v něm na druhou, takže na konci přijde odmocnina."],
+  },
+  {
+    skupina: "Výkon a práce", tema: "Doba provozu",
+    text: "Spotřebič o příkonu {P} spotřeboval energii {W}. Jak dlouho (t) běžel?",
+    vars: { P: [[0.5, 1, 1.5, 2, 2.5, 3], "kW"], W: [1, 50, "kWh", 1] },
+    hledam: "t", vzorec: "W / P", jednotka: "h",
+    vysvetleni: "Ze vzorce W = P · t vyjádříme čas: energii vydělíme výkonem. Kilowatthodiny dělené kilowatty dají hodiny.",
+    nazvy: { P: "příkon" },
+    napovedy: ["Vyjdi ze vzorce W = P · t a vyjádři t."],
+  },
+  {
+    skupina: "Výkon a práce", tema: "Práce z napětí, proudu a času",
+    text: "Spotřebič na napětí {U} odebírá proud {I} a běží {t}. Kolik kilowatthodin (W) spotřebuje?",
+    vars: { U: [[230], "V"], I: [0.5, 16, "A", 1], t: [1, 24, "h", 1] },
+    hledam: "W", vzorec: "U * I * t / 1000", jednotka: "kWh",
+    vysvetleni: "Výkon není zadaný, spočítáme ho z napětí a proudu. Vyjde ve wattech, proto se při výpočtu energie v kWh dělí tisícem.",
+    postup: [
+      ["P", "U * I", "W", "Výkon spotřebiče ve wattech."],
+      ["W", "P * t / 1000", "kWh", "Energie: výkon krát čas, děleno 1000 kvůli převodu W na kW."],
+    ],
+    napovedy: ["Nejdřív výkon P = U · I, potom práce W = P · t.", "Pozor na jednotky: výkon vyjde ve wattech, výsledek má být v kWh."],
+  },
+
   // ===================== Řazení rezistorů =====================
   {
     skupina: "Řazení rezistorů", tema: "Sériové řazení",
@@ -201,6 +239,38 @@ const PRIKLADY = [
     ],
     nazvy: { U1: "napětí na rezistoru R1" },
     napovedy: ["Oběma rezistory teče stejný proud. Nejdřív ho spočítej.", "I = U / (R1 + R2), potom U1 = R1 · I"],
+  },
+
+  {
+    skupina: "Řazení rezistorů", tema: "Tři rezistory sériově",
+    text: "Rezistory {R1}, {R2} a {R3} jsou zapojeny sériově. Jaký je jejich celkový odpor R?",
+    vars: { R1: [10, 470, "Ω", 0], R2: [10, 470, "Ω", 0], R3: [10, 470, "Ω", 0] },
+    hledam: "R", vzorec: "R1 + R2 + R3", jednotka: "Ω",
+    vysvetleni: "V sérii se sčítají odpory všech rezistorů, ať jich je kolik chce, protože proud musí projít každým z nich.",
+    napovedy: ["V sérii se odpory sčítají, i když jsou tři."],
+  },
+  {
+    skupina: "Řazení rezistorů", tema: "Neznámý rezistor v sérii",
+    text: "Dva rezistory zapojené sériově mají dohromady odpor {R}. První má {R1}. Jaký odpor R2 má druhý?",
+    vars: { R: [[500, 680, 1000], "Ω"], R1: [10, 470, "Ω", 0] },
+    hledam: "R2", vzorec: "R - R1", jednotka: "Ω",
+    vysvetleni: "V sérii platí R = R1 + R2. Když známe celek a jednu část, druhou dostaneme odečtením.",
+    nazvy: { R: "celkový odpor" },
+    napovedy: ["Vyjdi ze vzorce R = R1 + R2 a vyjádři R2."],
+  },
+  {
+    skupina: "Řazení rezistorů", tema: "Celkový proud paralelního zapojení",
+    text: "Rezistory {R1} a {R2} jsou zapojeny paralelně a připojeny na napětí {U}. Jaký celkový proud I odebírají ze zdroje?",
+    vars: { R1: [10, 470, "Ω", 0], R2: [10, 470, "Ω", 0], U: [[12, 24, 230], "V"] },
+    hledam: "I", vzorec: "U / R1 + U / R2", jednotka: "A",
+    vysvetleni: "Při paralelním zapojení je na obou rezistorech stejné napětí a každým teče vlastní proud. Celkový proud ze zdroje je jejich součet.",
+    postup: [
+      ["I1", "U / R1", "A", "Proud prvním rezistorem."],
+      ["I2", "U / R2", "A", "Proud druhým rezistorem."],
+      ["I", "I1 + I2", "A", "Proudy větví se sčítají."],
+    ],
+    nazvy: { I1: "proud rezistorem R1", I2: "proud rezistorem R2", I: "celkový proud" },
+    napovedy: ["Na obou rezistorech je stejné napětí U. Spočítej proud každým zvlášť a sečti je."],
   },
 
   // ===================== Odpor vodiče =====================
@@ -247,6 +317,28 @@ const PRIKLADY = [
       ["R", "R20 * (1 + α * Δϑ)", "Ω", "Odpor za tepla."],
     ],
     napovedy: ["Nejdřív oteplení Δϑ = ϑ − 20.", "R = R20 · (1 + α · Δϑ)"],
+  },
+
+  {
+    skupina: "Odpor vodiče", tema: "Dovolený proud z proudové hustoty",
+    text: "Vodič o průřezu {S} smí být zatížen proudovou hustotou nejvýše {J}. Jaký největší proud I jím může téct?",
+    vars: { S: PRUREZ, J: [2, 10, "A/mm²", 1] },
+    hledam: "I", vzorec: "J * S", jednotka: "A",
+    vysvetleni: "Proudová hustota říká, kolik ampérů smí připadnout na jeden mm². Vynásobením průřezem dostaneme proud celého vodiče.",
+    napovedy: ["Vyjdi ze vzorce J = I / S a vyjádři I."],
+  },
+  {
+    skupina: "Odpor vodiče", tema: "Teplota vinutí z odporu",
+    text: "Měděné vinutí má při 20 °C odpor {R20}, za provozu mu odpor vzrostl na {R}. Teplotní součinitel odporu je {α}. Jakou teplotu ϑ vinutí má?",
+    vars: { R20: [[50], "Ω"], R: [52, 65, "Ω", 1], α: [[0.004], "1/K"] },
+    hledam: "ϑ", vzorec: "20 + (R / R20 - 1) / α", jednotka: "°C",
+    vysvetleni: "Takhle se měří teplota vinutí motorů a transformátorů bez teploměru. Ze vzorce R = R20 · (1 + α · Δϑ) vyjádříme oteplení a přičteme ho k výchozím 20 °C.",
+    postup: [
+      ["Δϑ", "(R / R20 - 1) / α", "°C", "Oteplení vyjádřené z R = R20 · (1 + α · Δϑ)."],
+      ["ϑ", "20 + Δϑ", "°C", "Teplota je 20 °C plus oteplení."],
+    ],
+    nazvy: { R: "odpor za tepla" },
+    napovedy: ["Ze vzorce R = R20 · (1 + α · Δϑ) vyjádři oteplení Δϑ.", "Vyděl R20, odečti 1, vyděl α. K oteplení pak přičti 20 °C."],
   },
 
   // ===================== Úbytek napětí a ztráty =====================
@@ -380,6 +472,40 @@ const PRIKLADY = [
     napovedy: ["Jsou to tři kroky: proud z výkonu, odpor vodiče, úbytek napětí.", "I = P / (√3 · U),  Rv = ρ · l / S,  ΔU = I · Rv"],
   },
 
+  {
+    skupina: "Úbytek napětí a ztráty", tema: "Napětí na spotřebiči",
+    text: "Zdroj má napětí {U}. Ke spotřebiči vede vedení o odporu {Rv}, kterým protéká proud {I}. Jaké napětí U2 je na spotřebiči?",
+    vars: { U: [[230], "V"], Rv: [0.1, 0.8, "Ω", 2], I: [2, 32, "A", 0] },
+    hledam: "U2", vzorec: "U - I * Rv", jednotka: "V",
+    vysvetleni: "Část napětí zdroje se „ztratí“ na odporu vedení. Na spotřebič zbude napětí zdroje zmenšené o úbytek.",
+    postup: [
+      ["ΔU", "I * Rv", "V", "Úbytek napětí na vedení."],
+      ["U2", "U - ΔU", "V", "Napětí zdroje minus úbytek."],
+    ],
+    nazvy: { U: "napětí zdroje", U2: "napětí na spotřebiči" },
+    napovedy: ["Nejdřív úbytek na vedení ΔU = I · Rv, potom ho odečti od napětí zdroje."],
+  },
+  {
+    skupina: "Úbytek napětí a ztráty", tema: "Průřez dvouvodičového vedení",
+    text: "Jednofázový spotřebič odebírá proud {I} a je připojen dvouvodičovým měděným vedením ({ρ}) délky {l}. Úbytek napětí smí být nejvýše {ΔU}. Jaký nejmenší průřez S vodiče potřebuje?",
+    vars: { I: [5, 32, "A", 0], ρ: MED, l: DELKA, ΔU: [2, 12, "V", 1] },
+    hledam: "S", vzorec: "2 * I * ρ * l / ΔU", jednotka: "mm²",
+    vysvetleni: "U dvouvodičového vedení vzniká úbytek na vodiči tam i zpět, proto je ve vzorci dvojka. Ze vzorce ΔU = 2 · I · ρ · l / S vyjádříme průřez; v praxi se pak volí nejbližší vyšší vyráběný.",
+    napovedy: ["Vyjdi ze vzorce pro dvouvodičové vedení ΔU = 2 · I · ρ · l / S a vyjádři S."],
+  },
+  {
+    skupina: "Úbytek napětí a ztráty", tema: "Největší proud podle dovoleného úbytku",
+    text: "Měděný vodič ({ρ}) má délku {l} a průřez {S}. Úbytek napětí na něm smí být nejvýše {ΔU}. Jaký největší proud I jím může téct?",
+    vars: { ρ: MED, l: DELKA, S: PRUREZ, ΔU: [2, 12, "V", 1] },
+    hledam: "I", vzorec: "ΔU * S / (ρ * l)", jednotka: "A",
+    vysvetleni: "Odpor vodiče je daný jeho rozměry. Dovolený úbytek pak podle Ohmova zákona určuje, jaký největší proud vodičem smí téct.",
+    postup: [
+      ["Rv", "ρ * l / S", "Ω", "Odpor vodiče z jeho rozměrů."],
+      ["I", "ΔU / Rv", "A", "Proud, při kterém vznikne právě dovolený úbytek."],
+    ],
+    napovedy: ["Nejdřív odpor vodiče Rv = ρ · l / S.", "Potom ze vzorce ΔU = I · Rv vyjádři I."],
+  },
+
   // ===================== Trojfázová soustava =====================
   {
     skupina: "Trojfázová soustava", tema: "Trojfázový výkon",
@@ -443,6 +569,33 @@ const PRIKLADY = [
     vysvetleni: "Účiník je poměr činného výkonu (P) a zdánlivého výkonu (√3 · U · I). Říká, jaká část odebíraného proudu koná práci.",
     nazvy: { U: "sdružené napětí", P: "činný výkon" },
     napovedy: ["Vyjdi ze vzorce P = √3 · U · I · cos φ a vyjádři cos φ. Musí vyjít číslo mezi 0 a 1."],
+  },
+
+  {
+    skupina: "Trojfázová soustava", tema: "Výkon motoru na hřídeli",
+    text: "Trojfázový motor je připojen na sdružené napětí {U}, odebírá proud {I}, má účiník {cosφ} a účinnost {η}. Jaký výkon P2 dává na hřídeli?",
+    vars: { U: [[400], "V"], I: [2, 63, "A", 0], cosφ: UCINIK, η: [[0.75, 0.8, 0.85, 0.9], ""] },
+    hledam: "P2", vzorec: "sqrt(3) * U * I * cosφ * η", jednotka: "W",
+    vysvetleni: "Motor odebírá ze sítě činný příkon P1 = √3 · U · I · cos φ. Část se v motoru ztratí jako teplo, na hřídel se dostane jen díl daný účinností.",
+    postup: [
+      ["P1", "sqrt(3) * U * I * cosφ", "W", "Činný příkon odebíraný ze sítě."],
+      ["P2", "P1 * η", "W", "Výkon na hřídeli je příkon krát účinnost."],
+    ],
+    nazvy: { U: "sdružené napětí", P1: "činný příkon ze sítě", P2: "výkon na hřídeli" },
+    napovedy: ["Nejdřív příkon ze sítě P1 = √3 · U · I · cos φ.", "Výkon na hřídeli je příkon krát účinnost."],
+  },
+  {
+    skupina: "Trojfázová soustava", tema: "Proud motoru ze štítku",
+    text: "Trojfázový motor má na štítku výkon {P2}, napětí {U}, účiník {cosφ} a účinnost {η}. Jaký proud I odebírá ze sítě?",
+    vars: { P2: [[1500, 3000, 4000, 5500, 7500, 11000], "W"], U: [[400], "V"], cosφ: UCINIK, η: [[0.75, 0.8, 0.85, 0.9], ""] },
+    hledam: "I", vzorec: "P2 / (sqrt(3) * U * cosφ * η)", jednotka: "A",
+    vysvetleni: "Na štítku motoru je výkon na hřídeli, ne příkon. Ze sítě motor odebírá víc, proto se výkon nejdřív vydělí účinností. Z příkonu pak vyjde proud přehozením vzorce P1 = √3 · U · I · cos φ.",
+    postup: [
+      ["P1", "P2 / η", "W", "Příkon ze sítě je větší než výkon na hřídeli."],
+      ["I", "P1 / (sqrt(3) * U * cosφ)", "A", "Proud vyjádřený z P1 = √3 · U · I · cos φ."],
+    ],
+    nazvy: { U: "sdružené napětí", P1: "činný příkon ze sítě", P2: "výkon na hřídeli" },
+    napovedy: ["Štítkový výkon je výkon na hřídeli. Nejdřív z něj spočítej příkon P1 = P2 / η.", "Potom ze vzorce P1 = √3 · U · I · cos φ vyjádři I."],
   },
 
   // ===================== Střídavý výkon a účiník =====================
@@ -519,6 +672,37 @@ const PRIKLADY = [
     napovedy: ["Vyjdi z S² = P² + Q² a vyjádři Q."],
   },
 
+  {
+    skupina: "Střídavý výkon a účiník", tema: "Sinus z účiníku",
+    text: "Spotřebič má účiník {cosφ}. Kolik je sin φ?",
+    vars: { cosφ: UCINIK },
+    hledam: "sinφ", vzorec: "sqrt(1 - cosφ^2)", jednotka: "",
+    vysvetleni: "Pro každý úhel platí sin² φ + cos² φ = 1. Sinus je potřeba pro jalový výkon, ale na štítku bývá jen cos φ, proto se takhle dopočítává.",
+    napovedy: ["Použij vztah sin² φ + cos² φ = 1 a vyjádři sin φ."],
+  },
+  {
+    skupina: "Střídavý výkon a účiník", tema: "Jalový výkon z činného výkonu a účiníku",
+    text: "Spotřebič má činný výkon {P} a účiník {cosφ}. Jaký je jeho jalový výkon Q?",
+    vars: { P: [[3000, 4000, 6000, 8000], "W"], cosφ: UCINIK },
+    hledam: "Q", vzorec: "sqrt((P / cosφ)^2 - P^2)", jednotka: "var",
+    vysvetleni: "Z činného výkonu a účiníku nejdřív zjistíme zdánlivý výkon. Jalový výkon je pak druhá odvěsna trojúhelníku výkonů. Podle něj se navrhuje kompenzace účiníku.",
+    postup: [
+      ["S", "P / cosφ", "VA", "Zdánlivý výkon vyjádřený z P = S · cos φ."],
+      ["Q", "sqrt(S^2 - P^2)", "var", "Jalový výkon z trojúhelníku výkonů."],
+    ],
+    nazvy: { S: "zdánlivý výkon", P: "činný výkon" },
+    napovedy: ["Nejdřív zdánlivý výkon: z P = S · cos φ vyjádři S.", "Potom z trojúhelníku výkonů S² = P² + Q² vyjádři Q."],
+  },
+  {
+    skupina: "Střídavý výkon a účiník", tema: "Proud ze zdánlivého výkonu",
+    text: "Trojfázový transformátor má zdánlivý výkon {S} při sdruženém napětí {U}. Jaký proud I dodává?",
+    vars: { S: [[5000, 10000, 16000, 25000], "VA"], U: [[400], "V"] },
+    hledam: "I", vzorec: "S / (sqrt(3) * U)", jednotka: "A",
+    vysvetleni: "Ze vzorce S = √3 · U · I vyjádříme proud. Proto se transformátory a zdroje udávají ve VA: zdánlivý výkon přímo určuje proud bez ohledu na účiník zátěže.",
+    nazvy: { S: "zdánlivý výkon", U: "sdružené napětí" },
+    napovedy: ["Vyjdi ze vzorce S = √3 · U · I a vyjádři I."],
+  },
+
   // ===================== Reaktance a impedance =====================
   {
     skupina: "Reaktance a impedance", tema: "Indukční reaktance",
@@ -581,6 +765,39 @@ const PRIKLADY = [
     napovedy: ["Nejdřív z indukčnosti spočítej reaktanci XL.", "XL = 2 · π · f · L,  Z = √(R² + XL²)"],
   },
 
+  {
+    skupina: "Reaktance a impedance", tema: "Kapacita z reaktance",
+    text: "Kondenzátor má při kmitočtu {f} kapacitní reaktanci {XC}. Jaká je jeho kapacita C v mikrofaradech?",
+    vars: { f: [[50], "Hz"], XC: [30, 3000, "Ω", 0] },
+    hledam: "C", vzorec: "1 / (2 * pi * f * XC) * 10^6", jednotka: "µF",
+    vysvetleni: "Ve vzorci XC = 1 / (2 · π · f · C) si kapacita a reaktance mohou vyměnit místa. Vyjde kapacita ve faradech, na mikrofarady se násobí milionem.",
+    postup: [
+      ["Cf", "1 / (2 * pi * f * XC)", "F", "Kapacita ve faradech vyjádřená ze vzorce pro XC."],
+      ["C", "Cf * 10^6", "µF", "Převod z F na µF."],
+    ],
+    napovedy: ["Ze vzorce XC = 1 / (2 · π · f · C) vyjádři C.", "Vyjde ve faradech. Na mikrofarady vynásob 10^6."],
+  },
+  {
+    skupina: "Reaktance a impedance", tema: "Proud kondenzátorem",
+    text: "Kondenzátor o kapacitě {C} je připojen na střídavé napětí {U} o kmitočtu {f}. Jaký proud I jím protéká?",
+    vars: { C: [[1, 2.2, 4.7, 10, 22, 47, 100], "µF"], U: [[230], "V"], f: [[50], "Hz"] },
+    hledam: "I", vzorec: "U * 2 * pi * f * C * 10^-6", jednotka: "A",
+    vysvetleni: "Kondenzátor klade střídavému proudu odpor daný kapacitní reaktancí. S ní platí Ohmův zákon stejně jako s odporem. Kapacitu je potřeba převést z µF na F.",
+    postup: [
+      ["XC", "1 / (2 * pi * f * C * 10^-6)", "Ω", "Kapacitní reaktance (kapacita převedená na farady)."],
+      ["I", "U / XC", "A", "Ohmův zákon s reaktancí."],
+    ],
+    napovedy: ["Nejdřív kapacitní reaktance XC, pozor na převod µF na F (· 10^-6).", "Potom Ohmův zákon: I = U / XC."],
+  },
+  {
+    skupina: "Reaktance a impedance", tema: "Činný odpor z impedance",
+    text: "Cívka má impedanci {Z} a reaktanci {X}. Jaký je její činný odpor R?",
+    vars: { Z: [[100, 120, 150], "Ω"], X: [20, 90, "Ω", 0] },
+    hledam: "R", vzorec: "sqrt(Z^2 - X^2)", jednotka: "Ω",
+    vysvetleni: "Impedance je přepona trojúhelníku s odvěsnami R a X. Z Pythagorovy věty Z² = R² + X² vyjádříme odvěsnu R: odečteme a odmocníme.",
+    napovedy: ["Vyjdi ze vzorce Z² = R² + X² a vyjádři R."],
+  },
+
   // ===================== Transformátor =====================
   {
     skupina: "Transformátor", tema: "Výstupní napětí transformátoru",
@@ -605,5 +822,21 @@ const PRIKLADY = [
     hledam: "I1", vzorec: "I2 * N2 / N1", jednotka: "A",
     vysvetleni: "Transformátor bez ztrát přenese stejný výkon, jaký odebere: U1 · I1 = U2 · I2. Kde je vyšší napětí, teče proto menší proud, proudy jsou v opačném poměru než závity.",
     napovedy: ["Proudy jsou v opačném poměru než závity: I1 / I2 = N2 / N1."],
+  },
+  {
+    skupina: "Transformátor", tema: "Převod transformátoru",
+    text: "Transformátor má {N1} primárních a {N2} sekundárních závitů. Jaký je jeho převod p?",
+    vars: { N1: [[500, 800, 1000, 1200], ""], N2: [[30, 50, 60, 100, 120], ""] },
+    hledam: "p", vzorec: "N1 / N2", jednotka: "",
+    vysvetleni: "Převod říká, kolikrát transformátor sníží napětí. Je to poměr závitů primáru a sekundáru a stejný poměr mají i napětí: p = N1 / N2 = U1 / U2.",
+    napovedy: ["Převod je poměr počtu závitů primáru a sekundáru."],
+  },
+  {
+    skupina: "Transformátor", tema: "Primární napětí",
+    text: "Transformátor má {N1} primárních a {N2} sekundárních závitů. Na sekundáru je napětí {U2}. Jaké napětí U1 je na primáru?",
+    vars: { N1: [[500, 800, 1000, 1200], ""], N2: [[30, 50, 60, 100, 120], ""], U2: [[12, 24, 48], "V"] },
+    hledam: "U1", vzorec: "U2 * N1 / N2", jednotka: "V",
+    vysvetleni: "Napětí jsou ve stejném poměru jako počty závitů. Primár má víc závitů, takže na něm musí být napětí tolikrát větší.",
+    napovedy: ["Vyjdi z U1 / U2 = N1 / N2 a vyjádři U1."],
   },
 ];
