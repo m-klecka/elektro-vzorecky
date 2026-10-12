@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#12161b">
+<title>Elektro vzorečky</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #12161b; --panel: #1b2129; --line: #2e3742;
+    --text: #e8edf2; --muted: #93a0ae;
+    --amber: #ffb400; --ok: #4ade80; --ko: #ff7b72;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.5 system-ui, sans-serif;
+  }
+  main { max-width: 34rem; margin: 0 auto; padding: .5rem 1rem 9rem; } /* dole místo na pevnou lištu */
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  h1 { font-size: 1.05rem; margin: .5rem 0; letter-spacing: .02em; white-space: nowrap; }
+  h1::before { content: "⚡ "; color: var(--amber); }
+  #skore { margin: 0; color: var(--muted); font-size: .8rem; white-space: nowrap; }
+  #chyba { background: #4a1512; border: 1px solid var(--ko); border-radius: .5rem; padding: .75rem; white-space: pre-line; }
+
+  details { margin: .75rem 0 0; background: var(--panel); border: 1px solid var(--line); border-radius: .5rem; }
+  summary { padding: .6rem .9rem; cursor: pointer; color: var(--muted); font-size: .95rem; }
+  #skupiny { padding: 0 .9rem; }
+  #skupiny label { display: flex; align-items: center; gap: .6rem; min-height: 2.5rem; margin: 0; color: var(--text); }
+  #skupiny input { width: 1.2rem; height: 1.2rem; accent-color: var(--amber); }
+  #skupiny small { color: var(--muted); }
+  .hromadne { display: flex; gap: .5rem; padding: .5rem .9rem .9rem; }
+  .hromadne button { flex: 1; }
+
+  #vzorce { padding: 0 .9rem .5rem; }
+  #vzorce h3 { margin: 1rem 0 .25rem; font-size: .8rem; color: var(--amber); text-transform: uppercase; letter-spacing: .08em; }
+  #vzorce ul { list-style: none; margin: 0; padding: 0; }
+  #vzorce li { padding: .5rem 0; border-top: 1px solid var(--line); }
+  #vzorce small { display: block; margin-top: .15rem; color: var(--muted); }
+
+  .zadani {
+    background: var(--panel); border-left: 4px solid var(--amber);
+    border-radius: .5rem; padding: 1rem 1.1rem; margin: 1rem 0 1.5rem;
+  }
+  h2 { margin: 0 0 .4rem; font-size: .8rem; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: .08em; }
+  #text { margin: 0; font-size: 1.1rem; }
+
+  label { display: block; margin: 1.1rem 0 .35rem; color: var(--muted); }
+  label b { color: var(--text); font-family: var(--mono); }
+  textarea {
+    display: block; resize: vertical;
+    width: 100%; min-height: 3rem; padding: .5rem .75rem;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: .5rem;
+    font: 1.15rem var(--mono);
+  }
+  #kalk {
+    list-style: none; margin: .75rem 0 0; padding: .5rem .75rem;
+    background: #0b0e12; border: 1px solid var(--line); border-radius: .5rem;
+    font: 1.05rem var(--mono);
+  }
+  #kalk:empty { display: none; }
+  #kalk li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .3rem 0; }
+  math { font-size: 1.15em; }
+  #kalk span { color: var(--muted); overflow-wrap: anywhere; }
+  #kalk b { color: var(--amber); white-space: nowrap; }
+
+  button {
+    min-height: 3rem; padding: 0 1rem; cursor: pointer;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: .5rem; font: inherit;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  button:active { background: var(--line); }
+  button:disabled { opacity: .45; }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  textarea::placeholder { color: var(--muted); font: .9rem/1.5 system-ui, sans-serif; opacity: .8; }
+
+  /* klávesy vyplní celou šířku řádku, aby byly na mobilu co největší */
+  .klavesy { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+  .klavesy button { flex: 1 0 2.5rem; max-width: 6rem; padding: 0 .4rem; font-family: var(--mono); white-space: nowrap; }
+  .klavesy small { display: block; margin-top: -.3rem; padding-bottom: .2rem; font: .62rem system-ui, sans-serif; color: var(--muted); }
+  .klavesy .hledana { border-color: var(--amber); color: var(--amber); font-weight: 600; }
+  #prepinac[aria-expanded=true] { border-color: var(--amber); color: var(--amber); }
+
+  /* lišta s akcemi je pořád na dosah palce, i při otevřené klávesnici */
+  .akce {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1;
+    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--line);
+  }
+  .akce > * { max-width: 32rem; margin-inline: auto; }
+  .tlacitka { display: flex; gap: .5rem; }
+  .tlacitka button { flex: 1; padding: 0 .3rem; white-space: nowrap; }
+  .tlacitka button[type=submit] { flex: 1.3; }
+  button[type=submit], .hotovo #dalsi { background: var(--amber); border-color: var(--amber); color: #1a1300; font-weight: 600; }
+  .hotovo button[type=submit] { background: var(--panel); border-color: var(--line); color: var(--text); font-weight: 400; }
+
+  .fb { margin: 0 auto .5rem; font-size: .95rem; }
+  .fb:empty { display: none; }
+  .fb.ok { color: var(--ok); }
+  .fb.ko { color: var(--ko); }
+  #napovedy { padding-left: 1.3rem; color: var(--muted); }
+  #napovedy li { margin: .6rem 0; scroll-margin-bottom: 9rem; }
+  #vysvetleni {
+    margin-top: 1.25rem; padding: 1rem 1.1rem; scroll-margin-bottom: 9rem;
+    background: var(--panel); border-left: 4px solid var(--ok); border-radius: .5rem;
+  }
+  #vysvetleni h2 { color: var(--ok); }
+  #vysvetleni p { margin: 0; }
+  #postup { margin: .75rem 0 0; padding-left: 1.3rem; }
+  #postup li { margin-top: .75rem; color: var(--muted); }
+  #postup div { margin-top: .25rem; padding: .2rem 0; color: var(--text); overflow: auto hidden; white-space: nowrap; }
+  #legenda { list-style: none; margin: 1rem 0 0; padding: .75rem 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  #vzorce p { margin: .3rem 0 0; color: var(--muted); font-size: .9rem; }
+  #vzorce small { color: var(--text); }
+  details:first-of-type { margin-top: 2rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Elektro vzorečky</h1>
+    <p id="skore"></p>
+  </header>
+  <p id="chyba" role="alert" hidden></p>
+
+  <section class="zadani">
+    <h2 id="tema"></h2>
+    <p id="text"></p>
+  </section>
+
+  <form id="form">
+    <label for="vzorec">Postup, poslední řádek dá <b id="hledam"></b> <span id="jednotka"></span></label>
+    <textarea id="vzorec" required rows="3" placeholder="Vzorec písmeny, každý krok na nový řádek.&#10;Zlomek piš lomítkem, mezivýsledek pojmenuj: X = …" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    <div id="klavesnice">
+      <div id="klavesy" class="klavesy"></div>
+      <div id="recka" class="klavesy" hidden></div>
+    </div>
+    <ul id="kalk" aria-label="Kalkulačka: hodnoty jednotlivých kroků"></ul>
+    <div class="akce">
+      <p id="fb" class="fb" aria-live="polite"></p>
+      <div class="tlacitka">
+        <button type="button" id="napoveda">Nápověda</button>
+        <button type="submit">Zkontrolovat</button>
+        <button type="button" id="dalsi">Další</button>
+      </div>
+    </div>
+  </form>
+  <ol id="napovedy" aria-live="polite"></ol>
+  <section id="vysvetleni" aria-live="polite" hidden>
+    <h2>Vysvětlení</h2>
+    <p id="proc"></p>
+    <ol id="postup"></ol>
+    <ul id="legenda" aria-label="Legenda veličin"></ul>
+  </section>
+
+  <details>
+    <summary>Typy příkladů: <span id="vybrano"></span></summary>
+    <div id="skupiny"></div>
+    <div class="hromadne">
+      <button type="button" id="vse">Vybrat vše</button>
+      <button type="button" id="nic">Zrušit vše</button>
+    </div>
+  </details>
+
+  <details>
+    <summary>Přehled vzorců</summary>
+    <div id="vzorce"></div>
+  </details>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjs@14.9.1/lib/browser/math.js"></script>
+<script src="priklady.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const nazev = s => s.replace(/^(cos|sin)φ$/, "$1 φ");
+const cislo = x => x.toLocaleString("cs-CZ", { maximumSignificantDigits: 6 });
+
+// přepíše zápis od člověka (√3, 0,5, ·, :) do syntaxe math.js
+const normalizuj = s => s
+  .replace(/,/g, ".").replace(/[·×]/g, "*").replace(/π/g, "(pi)").replace(/:/g, "/").replace(/−/g, "-")
+  .replace(/(cos|sin)\s*\(\s*φ\s*\)/g, "$1φ").replace(/(cos|sin)\s+φ/g, "$1φ") // cos φ je jedna veličina
+  .replace(/√\s*([\d.]+|[\p{L}_][\p{L}\p{N}_]*)/gu, "sqrt($1)").replace(/√/g, "sqrt");
+const spocti = (vyraz, hodnoty) => math.evaluate(normalizuj(vyraz), { ...hodnoty });
+const shodne = (a, b, tol) => typeof a === "number" && Math.abs(a - b) <= tol * Math.abs(b);
+const radky = text => text.split("\n").filter(r => r.trim());
+
+// Vyhodnotí kroky (řádky) jeden po druhém nad společnými hodnotami, takže mezivýsledek
+// pojmenovaný "Rv = ..." jde použít v dalším kroku. Krok, který nedá číslo, vrací undefined.
+function spoctiKroky(text, hodnoty) {
+  const scope = { ...hodnoty };
+  return radky(text).map(r => {
+    try {
+      const v = math.evaluate(normalizuj(r), scope);
+      return Number.isFinite(v) ? v : undefined;
+    } catch {}
+  });
+}
+
+// Vykreslí vzorec "jako v sešitě" (zlomek se zlomkovou čarou, odmocnina) přes MathML,
+// které umí prohlížeče samy. n je strom z math.parse; veličiny z dosad se nahradí čísly.
+const M = (tag, ...deti) => {
+  const e = document.createElementNS("http://www.w3.org/1998/Math/MathML", tag);
+  e.append(...deti);
+  return e;
+};
+function mathml(n, dosad = {}) {
+  const d = x => mathml(x, dosad);
+  const bezZavorek = x => d(x.isParenthesisNode ? x.content : x); // zlomek a odmocnina seskupují samy
+  if (n.isParenthesisNode) return M("mrow", M("mo", "("), d(n.content), M("mo", ")"));
+  if (n.isAssignmentNode) return M("mrow", d(n.object), M("mo", "="), d(n.value));
+  if (n.isConstantNode) return M("mn", cislo(n.value));
+  if (n.isSymbolNode) {
+    if (n.name in dosad) return M("mn", cislo(dosad[n.name]));
+    const [, zaklad, index] = n.name.match(/^([A-Z])([a-zA-Z]|\d+)$/) || []; // Rv, U1, XL, R20 s dolním indexem
+    return index ? M("msub", M("mi", zaklad), M("mtext", index)) : M("mi", n.name === "pi" ? "π" : nazev(n.name));
+  }
+  if (n.isFunctionNode && n.fn.name === "sqrt" && n.args.length === 1) return M("msqrt", bezZavorek(n.args[0]));
+  if (n.isOperatorNode) {
+    const [a, b] = n.args;
+    if (n.op === "/") return M("mfrac", bezZavorek(a), bezZavorek(b));
+    if (n.op === "^") return M("msup", d(a), bezZavorek(b));
+    if (!b) return M("mrow", M("mo", n.op), d(a));
+    return M("mrow", d(a), M("mo", n.op === "*" ? "·" : n.op), d(b));
+  }
+  return M("mtext", n.toString());
+}
+function vzorecEl(...deti) {
+  const m = M("math", ...deti);
+  m.setAttribute("displaystyle", "true");
+  return m;
+}
+
+// Rozepíše řešení na kroky (podle postup, jinak jediný krok = vzorec) a ke každému dopočítá hodnotu.
+// dosazeno = co je v tom kroku známé: zadané hodnoty a výsledky předchozích kroků.
+function reseni(q, h) {
+  const znam = { ...h };
+  return (q.postup || [[q.hledam, q.vzorec, q.jednotka]]).map(([co, vzorec, jedn, popis]) => {
+    const dosazeno = { ...znam };
+    return { co, vzorec, jedn, popis, dosazeno, hodnota: znam[co] = spocti(vzorec, znam) };
+  });
+}
+
+// legenda "symbol – název [jednotka]" pro hledanou veličinu, zadané veličiny a případně mezivýsledky
+function legenda(q, sMezivysledky) {
+  const mezi = sMezivysledky ? (q.postup || []).slice(0, -1).map(([s, , j]) => [s, j]) : [];
+  return [[q.hledam, q.jednotka], ...Object.entries(q.vars).map(([s, d]) => [s, jednotka(d)]), ...mezi]
+    .map(([s, j]) => `${nazev(s)} – ${q.nazvy?.[s] || VELICINY[s]}${j ? ` [${j}]` : ""}`);
+}
+
+const jednotka = d => Array.isArray(d[0]) ? d[1] : d[2];
+function generuj(p) {
+  const h = {};
+  for (const [s, d] of Object.entries(p.vars))
+    h[s] = Array.isArray(d[0]) ? d[0][Math.floor(Math.random() * d[0].length)]
+         : Math.round((d[0] + Math.random() * (d[1] - d[0])) * 10 ** d[3]) / 10 ** d[3];
+  return h;
+}
+
+// řecká písmena na klávesnici; další přidáš sem
+const RECKA = {
+  α: "alfa", β: "beta", γ: "gama", δ: "delta", Δ: "Delta", ε: "epsilon", η: "éta", ϑ: "théta", λ: "lambda",
+  μ: "mí", π: "pí", ρ: "ró", σ: "sigma", τ: "tau", φ: "fí", Φ: "Fí", ψ: "psí", ω: "omega",
+};
+
+// Nastavení: které skupiny příkladů se losují. Ukládají se vypnuté, aby nově přidaná skupina byla zapnutá.
+const SKUPINY = [...new Set(PRIKLADY.map(q => q.skupina))];
+const vypnute = new Set(JSON.parse(localStorage.getItem("elektro-vypnute") || "[]"));
+function vyber() {
+  const z = PRIKLADY.filter(q => !vypnute.has(q.skupina));
+  return z.length ? z : PRIKLADY; // nic nevybráno = losuje se ze všeho
+}
+function ukazVyber() {
+  const n = SKUPINY.filter(s => !vypnute.has(s)).length;
+  $("vybrano").textContent = n ? `${n} z ${SKUPINY.length}` : "nic nevybráno, losuje se ze všeho";
+}
+$("skupiny").replaceChildren(...SKUPINY.map(s => {
+  const l = document.createElement("label"), c = document.createElement("input"), pocet = document.createElement("small");
+  c.type = "checkbox";
+  c.value = s;
+  c.checked = !vypnute.has(s);
+  pocet.textContent = `(${PRIKLADY.filter(q => q.skupina === s).length})`;
+  l.append(c, s, pocet);
+  return l;
+}));
+function ulozVyber() {
+  for (const c of $("skupiny").querySelectorAll("input")) c.checked ? vypnute.delete(c.value) : vypnute.add(c.value);
+  localStorage.setItem("elektro-vypnute", JSON.stringify([...vypnute]));
+  ukazVyber();
+  if (!vyber().includes(p)) novy();
+}
+$("skupiny").onchange = ulozVyber;
+for (const [id, stav] of [["vse", true], ["nic", false]]) $(id).onclick = () => {
+  for (const c of $("skupiny").querySelectorAll("input")) c.checked = stav;
+  ulozVyber();
+};
+
+// přehled vzorců se skládá z priklady.js, takže nově přidaný příklad se v něm objeví sám
+function ukazPrehled() {
+  $("vzorce").replaceChildren(...SKUPINY.flatMap(s => {
+    const h = document.createElement("h3"), ul = document.createElement("ul");
+    h.textContent = s;
+    ul.append(...PRIKLADY.filter(q => q.skupina === s).map(q => {
+      const li = document.createElement("li"), t = document.createElement("small");
+      t.textContent = q.tema;
+      const proc = document.createElement("p");
+      proc.textContent = q.vysvetleni;
+      const leg = document.createElement("p");
+      leg.textContent = legenda(q).join(" · ");
+      li.append(vzorecEl(mathml(new math.SymbolNode(q.hledam)), M("mo", "="), mathml(math.parse(q.vzorec))), t, leg, proc);
+      return li;
+    }));
+    return [h, ul];
+  }));
+}
+
+let p, hodnoty, spravne, napovedy, hotovo;
+const skore = JSON.parse(localStorage.getItem("elektro") || '{"ok":0,"serie":0}');
+
+// Postup se neporovnává jako text: poslední krok musí vyjít stejně jako správný vzorec,
+// a to i pro náhodná čísla – jinak by prošlo opsání hodnot ze zadání.
+function zkontrolujPostup(vstup) {
+  let nahodne; // náhodná čísla, pro která má správný vzorec smysl (ne třeba odmocnina ze záporného)
+  do nahodne = Object.fromEntries(Object.keys(p.vars).map(s => [s, 0.5 + Math.random()]));
+  while (!Number.isFinite(spocti(p.vzorec, nahodne)));
+  const kroky = spoctiKroky(vstup, hodnoty);
+  const spatny = kroky.indexOf(undefined);
+  if (spatny >= 0) return `Kroku ${spatny + 1} nerozumím. Použij veličiny ${Object.keys(p.vars).map(nazev).join(", ")} a své mezivýsledky.`;
+  if (!shodne(kroky.at(-1), spravne, 5e-3)) return "Poslední krok nevychází. Zkontroluj vzorec.";
+  // dosazení a výsledek dopsané čísly pod vzorec ("0,83·26", "ΔU = 21,58") nevadí, vzorec je krok nad nimi
+  const vzorce = radky(vstup), vsech = vzorce.length;
+  while (/^([^=]*=)?[^\p{L}]+$/u.test(vzorce.at(-1))) vzorce.pop();
+  if (!shodne(spoctiKroky(vzorce.join("\n"), nahodne).at(-1), spocti(p.vzorec, nahodne), 5e-3))
+    return vzorce.length && vzorce.length < vsech ? "Číslo vychází, ale vzorec nad ním ne." : "Piš vzorec písmeny veličin, ne čísly.";
+  return "";
+}
+
+// kalkulačka: ke každému kroku hned ukáže, kolik vychází po dosazení hodnot ze zadání
+function prepocitej() {
+  const v = $("vzorec");
+  v.rows = Math.max(3, v.value.split("\n").length + 1);
+  const kroky = spoctiKroky(v.value, hodnoty);
+  $("kalk").replaceChildren(...radky(v.value).map((r, i) => {
+    const li = document.createElement("li"), co = document.createElement("span"), kolik = document.createElement("b");
+    try { co.append(vzorecEl(mathml(math.parse(normalizuj(r))))); }
+    catch { co.textContent = r.trim(); } // rozepsaný krok, který ještě nejde vykreslit
+    kolik.textContent = kroky[i] === undefined ? "…" : "= " + kroky[i].toLocaleString("cs-CZ", { maximumSignificantDigits: 5 });
+    li.append(co, kolik);
+    return li;
+  }));
+}
+
+function ukaz(el, chyba) {
+  el.textContent = chyba ? "✗ " + chyba : "✓ Správně";
+  el.className = "fb " + (chyba ? "ko" : "ok");
+}
+
+function ukazSkore() {
+  $("skore").textContent = `správně ${skore.ok} · série ${skore.serie}`;
+  localStorage.setItem("elektro", JSON.stringify(skore));
+}
+
+function novy() {
+  const predchozi = p;
+  const z = vyber();
+  do p = z[Math.floor(Math.random() * z.length)];
+  while (z.length > 1 && p === predchozi);
+  hodnoty = generuj(p);
+  spravne = spocti(p.vzorec, hodnoty);
+  hotovo = false;
+  const strom = math.parse(p.vzorec);
+  const rovnice = prava => vzorecEl(mathml(new math.SymbolNode(p.hledam)), M("mo", "="), prava);
+  napovedy = [...p.napovedy,
+    ["Vzorec: ", rovnice(mathml(strom))],
+    ["Dosazení: ", rovnice(mathml(strom, hodnoty))],
+    null]; // null = poslední stupeň: celé řešení s vysvětlením
+
+  $("tema").textContent = p.tema;
+  $("text").textContent = p.text.replace(/\{(.+?)\}/g, (_, s) => `${nazev(s)} = ${cislo(hodnoty[s])} ${jednotka(p.vars[s])}`.trim());
+  $("hledam").textContent = nazev(p.hledam);
+  $("jednotka").textContent = p.jednotka ? `[${p.jednotka}]` : "[bez jednotky]";
+  $("klavesy").replaceChildren(...[p.hledam, ...Object.keys(p.vars), "=", "√", "(", ")", "·", "/", "^", "↵", "⌫"].map(klavesa), prepinac);
+  $("recka").replaceChildren(...Object.keys(RECKA).filter(t => !(t in p.vars)).map(klavesa));
+  $("form").classList.remove("hotovo");
+  $("form").reset();
+  for (const id of ["fb", "napovedy"]) $(id).textContent = "";
+  prepocitej();
+  $("vysvetleni").hidden = true;
+  popisNapovedy();
+  scrollTo(0, 0);
+}
+
+function popisNapovedy() {
+  $("napoveda").textContent = napovedy.length > 1 ? `Nápověda (${napovedy.length - 1})` : "Řešení";
+  $("napoveda").disabled = !napovedy.length;
+}
+
+// vysvětlení + řešení krok za krokem: vzorec, dosazení a výsledek každého kroku
+function ukazVysvetleni() {
+  $("proc").textContent = p.vysvetleni;
+  $("postup").replaceChildren(...reseni(p, hodnoty).map(k => {
+    const li = document.createElement("li"), strom = math.parse(k.vzorec);
+    const radek = (...deti) => {
+      const d = document.createElement("div");
+      d.append(vzorecEl(mathml(new math.SymbolNode(k.co)), M("mo", "="), ...deti));
+      return d;
+    };
+    const vysledek = radek(mathml(strom, k.dosazeno), M("mo", "="), M("mn", cislo(Number(k.hodnota.toPrecision(4)))));
+    vysledek.append(" " + k.jedn);
+    li.append(k.popis || "", radek(mathml(strom)), vysledek);
+    return li;
+  }));
+  $("legenda").replaceChildren(...legenda(p, true).map(t => Object.assign(document.createElement("li"), { textContent: t })));
+  $("vysvetleni").hidden = false;
+  $("vysvetleni").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function klavesa(t) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.value = t;
+  b.textContent = nazev(t);
+  if (RECKA[t]) b.append(Object.assign(document.createElement("small"), { textContent: RECKA[t] }));
+  if (t === "⌫") b.ariaLabel = "Smazat znak";
+  if (t === "↵") b.ariaLabel = "Nový krok";
+  if (t === p.hledam) b.className = "hledana"; // veličina, kterou počítáme
+  return b;
+}
+// řecká písmena jsou schovaná za přepínačem, aby klávesnice nezabrala půl obrazovky
+const prepinac = Object.assign(document.createElement("button"), { type: "button", id: "prepinac", textContent: "αβγ", ariaLabel: "Řecká písmena", ariaExpanded: "false" });
+prepinac.onclick = () => prepinac.ariaExpanded = String(!($("recka").hidden = !$("recka").hidden));
+
+// mousedown: tlačítka nesmí vzít poli fokus, jinak se na mobilu zavře klávesnice
+$("klavesnice").onmousedown = e => e.preventDefault();
+$("klavesnice").onclick = e => {
+  const t = e.target.closest("button")?.value;
+  if (!t) return;
+  const v = $("vzorec"), a = v.selectionStart, b = v.selectionEnd;
+  if (t === "⌫") v.setRangeText("", a === b ? Math.max(0, a - 1) : a, b, "end");
+  else v.setRangeText(t === "↵" ? "\n" : t, a, b, "end");
+  prepocitej();
+};
+$("vzorec").oninput = prepocitej;
+
+$("form").onsubmit = e => {
+  e.preventDefault();
+  const chyba = zkontrolujPostup($("vzorec").value);
+  ukaz($("fb"), chyba);
+  if (hotovo) return;
+  if (chyba) skore.serie = 0;
+  else { skore.ok++; skore.serie++; hotovo = true; $("form").classList.add("hotovo"); ukazVysvetleni(); }
+  ukazSkore();
+};
+
+$("napoveda").onclick = () => {
+  const n = napovedy.shift();
+  popisNapovedy();
+  if (n === null) return ukazVysvetleni();
+  const li = document.createElement("li");
+  li.append(...[].concat(n));
+  $("napovedy").append(li);
+  li.scrollIntoView({ block: "nearest", behavior: "smooth" });
+};
+
+$("dalsi").onclick = novy;
+
+// kontrola priklady.js, aby se překlep v nově přidaném příkladu ukázal hned
+function chybyPrikladu() {
+  if (!window.math) return ["Nepodařilo se načíst knihovnu math.js. Jsi online?"];
+  return PRIKLADY.flatMap((q, i) => {
+    try {
+      if (!q.skupina) throw "chybí skupina";
+      if (!q.vysvetleni) throw "chybí vysvetleni";
+      if (/undefined/.test(legenda(q, true))) throw "některá veličina nemá název ve VELICINY ani v nazvy: " + legenda(q, true).filter(t => /undefined/.test(t)).join(", ");
+      const h = generuj(q);
+      const chybi = [...q.text.matchAll(/\{(.+?)\}/g)].map(m => m[1]).filter(s => !(s in h));
+      if (chybi.length) throw `v textu je {${chybi}}, ale chybí ve vars`;
+      if (!Number.isFinite(spocti(q.vzorec, h))) throw `vzorec "${q.vzorec}" nedává číslo`;
+      const posledni = reseni(q, h).at(-1);
+      if (posledni.co !== q.hledam || !shodne(posledni.hodnota, spocti(q.vzorec, h), 1e-9)) throw "postup nekončí stejným výsledkem jako vzorec";
+      return [];
+    } catch (e) {
+      return [`Příklad č. ${i + 1} (${q.tema}): ${e.message || e}`];
+    }
+  });
+}
+
+const chyby = chybyPrikladu();
+if (chyby.length) {
+  $("chyba").textContent = chyby.join("\n");
+  $("chyba").hidden = false;
+} else {
+  ukazSkore();
+  ukazVyber();
+  ukazPrehled();
+  novy();
+}
+</script>
+</body>
+</html>
