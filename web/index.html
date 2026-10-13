@@ -220,6 +220,7 @@ function mathml(n, dosad = {}) {
     return index ? M("msub", M("mi", zaklad), M("mtext", index)) : M("mi", n.name === "pi" ? "π" : nazev(n.name));
   }
   if (n.isFunctionNode && n.fn.name === "sqrt" && n.args.length === 1) return M("msqrt", bezZavorek(n.args[0]));
+  if (n.isFunctionNode) return M("mrow", M("mi", n.fn.name), M("mo", "("), ...n.args.map(d), M("mo", ")")); // sin, acos
   if (n.isOperatorNode) {
     const [a, b] = n.args;
     if (n.op === "/") return M("mfrac", bezZavorek(a), bezZavorek(b));
