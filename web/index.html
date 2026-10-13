@@ -118,6 +118,38 @@
   #vzorce p { margin: .3rem 0 0; color: var(--muted); font-size: .9rem; }
   #vzorce small { color: var(--text); }
   details:first-of-type { margin-top: 2rem; }
+
+  /* desktop: širší sloupec, větší písmo a víc vzduchu; mobil zůstává úsporný */
+  @media (min-width: 60rem) {
+    body { font-size: 19px; }
+    main { max-width: 58rem; padding: 2rem 2rem 11rem; }
+    header { margin-bottom: 1rem; }
+    h1 { font-size: 1.4rem; }
+    #skore { font-size: .9rem; }
+    .zadani { padding: 1.75rem 2rem; margin: 1.5rem 0 2.5rem; }
+    h2 { margin-bottom: .75rem; }
+    #text { font-size: 1.3rem; line-height: 1.6; }
+    label { margin: 1.75rem 0 .6rem; }
+    textarea { min-height: 9rem; padding: 1rem 1.25rem; font-size: 1.3rem; line-height: 1.7; }
+    .klavesy { gap: .6rem; margin-top: .9rem; }
+    .klavesy button { min-height: 3.5rem; flex-basis: 3.5rem; max-width: 8rem; }
+    #kalk { margin-top: 1.5rem; padding: 1rem 1.25rem; }
+    #kalk li { padding: .55rem 0; }
+    .akce { padding-block: 1rem; }
+    .akce > * { max-width: 54rem; }
+    .tlacitka { gap: 1rem; }
+    .tlacitka button { min-height: 3.5rem; }
+    #napovedy li { margin: 1rem 0; }
+    #vysvetleni { margin-top: 2rem; padding: 1.75rem 2rem; }
+    #postup li { margin-top: 1.25rem; }
+    details { margin-top: 1.25rem; }
+    details:first-of-type { margin-top: 3rem; }
+    summary { padding: 1rem 1.25rem; }
+    #skupiny { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; padding: 0 1.25rem; }
+    .hromadne { padding: .75rem 1.25rem 1.25rem; }
+    #vzorce { padding: 0 1.25rem 1rem; }
+    #vzorce li { padding: .9rem 0; }
+  }
 </style>
 </head>
 <body>
